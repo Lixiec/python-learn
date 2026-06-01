@@ -2,6 +2,7 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
+import config
 
 
 # 定义一个工具：计算两个数之和
@@ -18,8 +19,12 @@ def to_upper(text: str) -> str:
     return text.upper()
 
 
-# 初始化 LLM
-llm: ChatOpenAI = ChatOpenAI(model="gpt-4o-mini")
+# 初始化 LLM（从 config.py 读取配置）
+llm: ChatOpenAI = ChatOpenAI(
+    model=config.MODEL,
+    api_key=config.API_KEY,
+    base_url=config.BASE_URL,
+)
 
 # 注册工具列表
 tools: list = [add, to_upper]
