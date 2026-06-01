@@ -30,7 +30,7 @@ CASES: list = [
     {
         "id": "search_basic",
         "input": "帮我搜索一下 Python 是什么",
-        "expected_tools": ["baidu_search"],
+        "expected_tools": ["baidu_search_mock"],
         "expected_keywords": ["编程", "语言", "Python"],
     },
     {

@@ -21,8 +21,12 @@ from evals.cases import CASES
 
 
 def run_eval() -> None:
-    # 构建 agent 执行器（开启中间步骤返回，用于检查工具调用）
-    agent_executor = build_agent_executor(return_intermediate_steps=True)
+    # eval 时用 mock_tools=True，不真实调用百度，结果稳定可重复
+    agent_executor = build_agent_executor(
+        return_intermediate_steps=True,
+        enable_observability=False,  # eval 时关闭 observability，减少干扰
+        mock_tools=True,
+    )
 
     total: int = len(CASES)    # 用例总数
     passed: int = 0            # 通过数量
