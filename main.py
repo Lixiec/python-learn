@@ -10,6 +10,8 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
+import requests
+from bs4 import BeautifulSoup
 import config
 
 
@@ -18,6 +20,50 @@ import config
 # @tool 装饰器会把普通函数注册为 agent 可调用的工具
 # 函数的 docstring 非常重要：agent 靠它来判断什么时候该用这个工具
 # ─────────────────────────────────────────────
+
+@tool
+def baidu_search(keyword: str) -> str:
+    """在百度上搜索关键词，返回相关信息摘要。当需要查询实时信息或不知道答案时使用。"""
+    # 请求头，伪装成浏览器，否则百度会拒绝请求
+    headers: dict = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/120.0.0.0 Safari/537.36"
+    }
+    url: str = f"https://www.baidu.com/s?wd={keyword}"
+    response = requests.get(url, headers=headers, timeout=10)
+    response.encoding = "utf-8"
+
+    # 解析 HTML，提取纯文字内容
+    soup = BeautifulSoup(response.text, "html.parser")
+    all_text: str = soup.get_text()
+
+    # 过滤无意义的导航栏内容
+    skip_keywords: list = ["登录", "设置", "贴吧", "hao123", "网页", "图片", "视频", "换一换", "热搜榜"]
+    lines: list = []
+    seen: set = set()  # 去重集合
+
+    for line in all_text.split("\n"):
+        line = line.strip()
+        if (15 < len(line) < 150
+                and line not in seen
+                and not any(kw in line for kw in skip_keywords)):
+            seen.add(line)
+            lines.append(line)
+        if len(lines) >= 10:
+            break
+
+    return "\n".join(lines) if lines else "未找到搜索结果"
+
+
+@tool
+def minus(input : str) -> str:
+    """计算两个整数之差。输入格式：两个数字用逗号分割，例如'18.25'"""
+    parts : list = input.split(",")
+    a: int = int(parts[0].strip())
+    b: int = int(parts[1].strip())
+    return str(a - b)
+
 
 @tool
 def add(input: str) -> str:
@@ -47,7 +93,7 @@ llm: ChatOpenAI = ChatOpenAI(
 )
 
 # 将所有工具放入列表，后续传给 agent 和执行器
-tools: list = [add, to_upper]
+tools: list = [add, to_upper, minus, baidu_search]
 
 
 # ─────────────────────────────────────────────
@@ -95,7 +141,7 @@ agent_executor: AgentExecutor = AgentExecutor(agent=agent, tools=tools, verbose=
 def main() -> None:
     # 调用 agent，传入用户问题
     # agent 会自动决定调用哪些工具、调用几次，最终返回答案
-    result: dict = agent_executor.invoke({"input": "请帮我计算 18 + 25，然后把结果转成大写英文单词"})
+    result: dict = agent_executor.invoke({"input": "帮我搜索一下 LangChain 是什么"})
 
     # result["output"] 是 agent 的最终答案
     print("最终结果：", result["output"])
