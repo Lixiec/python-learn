@@ -20,7 +20,7 @@ def main() -> None:
     # verbose=True：打印 agent 每一步的思考过程，方便学习调试
     agent_executor = build_agent_executor(verbose=True)
 
-    user_input: str = "帮我搜索一下 LangChain 是什么"
+    user_input: str = "帮我搜索一下 25~27岁人的年薪现状"
 
     # ── 第一关：输入护栏 ──────────────────────
     # 在把用户输入送给 agent 之前，先做安全检查
